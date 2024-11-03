@@ -1,14 +1,14 @@
 {
   "en": {
-    "xcratchExample.entry.name": "Xcratch Example",
-    "xcratchExample.entry.description": "Do it in JavaScript"
+    "pcratchPico.entry.name": "Pcratch Pico Extension",
+    "pcratchPico.entry.description": "Control Micro-Python devices"
   },
   "ja": {
-    "xcratchExample.entry.name": "Xcratchの例",
-    "xcratchExample.entry.description": "JavaScriptを実行する"
+    "pcratchPico.entry.name": "ぷくらっち ぴこ 拡張機能",
+    "pcratchPico.entry.description": "Micro-Pythonデバイスを制御する"
   },
   "ja-Hira": {
-    "xcratchExample.entry.name": "エクスクラッチのれい",
-    "xcratchExample.entry.description": "ジャバスクリプトをじっこうする"
+    "pcratchPico.entry.name": "ぷくらっち ぴこ かくちょうきのう",
+    "pcratchPico.entry.description": "マイクロパイソンデバイスをせいぎょする"
   }
 }

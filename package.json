@@ -1,7 +1,7 @@
 {
-  "name": "raspico-more-ext",
-  "version": "0.0.1",
-  "description": "example extension for Kitaratch",
+  "name": "pcratch-pico-ext",
+  "version": "0.0.2",
+  "description": "Control Micro-Python Pico devices extension for Pcratch",
   "scripts": {
     "setup-dev": "node ./scripts/setup-dev.mjs",
     "build": "rollup -c ./scripts/rollup.config.mjs",

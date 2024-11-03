@@ -17,13 +17,13 @@ let formatMessage = messageData => messageData.defaultMessage;
 const entry = {
     get name () {
         return formatMessage({
-            id: 'xcratchExample.entry.name',
+            id: 'pcratchPico.entry.name',
             defaultMessage: 'Xcratch Example',
             description: 'name of the extension'
         });
     },
-    extensionId: 'xcratchExample',
-    extensionURL: 'https://xcratch.github.io/xcx-example/dist/xcratchExample.mjs',
+    extensionId: 'pcratchPico',
+    extensionURL: 'https://xcratch.github.io/xcx-example/dist/pcratchPico.mjs',
     collaborator: 'xcratch',
     iconURL: iconURL,
     insetIconURL: insetIconURL,
@@ -31,13 +31,24 @@ const entry = {
         return formatMessage({
             defaultMessage: 'an extension for Xcratch',
             description: 'Description for this extension',
-            id: 'xcratchExample.entry.description'
+            id: 'pcratchPico.entry.description'
         });
     },
     featured: true,
     disabled: false,
     bluetoothRequired: false,
     internetConnectionRequired: false,
+    launchPeripheralConnectionFlow: true,
+    useAutoScan: false,
+    connectionIconURL: insetIconURL,
+    connectionSmallIconURL: insetIconURL,
+    get connectingMessage () {
+        return formatMessage({
+            defaultMessage: 'Connecting',
+            description: 'Message to help people connect to their micro:bit.',
+            id: 'gui.extension.microbit.connectingMessage'
+        });
+    },
     helpLink: 'https://xcratch.github.io/xcx-example/',
     setFormatMessage: formatter => {
         formatMessage = formatter;

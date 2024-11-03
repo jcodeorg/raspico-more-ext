@@ -1,14 +1,21 @@
 {
   "en": {
-    "xcratchExample.name": "Rasberry Pi Pico More Extension",
-    "xcratchExample.doIt": "do it [SCRIPT]"
+    "pcratchPico.connectPico": "Connect to the Micro-Python device [PORT]"
   },
   "ja": {
-    "xcratchExample.name": "Rasberry Pi Pico More Extension",
-    "xcratchExample.doIt": "[SCRIPT] を実行する"
+    "pcratchPico.name": "ぷくらっちPico拡張機能",
+    "pcratchPico.connectPico": "MicroPythonデバイスと接続 [PORT]",
+    "pcratchPico.execCommand": "[TEXT] を実行",
+    "pcratchPico.sendCtrlCode": "CTRL- [TEXT] を送信",
+    "pcratchPico.dumpValue": "デバイスの返却値! [SCRIPT]",
+    "pcratchPico.getAdc00": "ADC0",
+    "pcratchPico.getAdc01": "ADC1",
+    "pcratchPico.getAdc02": "ADC2",
+    "pcratchPico.getAdc03": "ADC3",
+    "pcratchPico.getAdc04": "ADC4",
+    "pcratchPico.lightLevel": "あかるさ"
   },
   "ja-Hira": {
-    "xcratchExample.name": "Rasberry Pi Pico More Extension",
-    "xcratchExample.doIt": "[SCRIPT] をじっこうする"
+    "pcratchPico.connectPico": "MicroPythonデバイスとせつぞく [PORT]"
   }
 }

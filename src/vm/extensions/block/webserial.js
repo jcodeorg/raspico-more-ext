@@ -60,8 +60,6 @@ export class PicoSerial {
 
         // ランタイムを保存
         this._runtime = runtime;
-        // 書き込み Stream
-        this.picowriter = null;
         // ポート選択ドロップダウン
         this.portSelector = undefined;
         // 接続ボタン
@@ -71,7 +69,9 @@ export class PicoSerial {
         // 現在使用しているポート
         this.picoport = undefined;
         // 現在使用しているリーダー
-        this.picoreader = undefined;
+        this.picoreader = null;
+        // 書き込み Stream
+        this.picowriter = null;
         // 接続ステータス
         this.status = 0; // 0:未接続 1:接続中 2:接続済み
 
@@ -204,6 +204,13 @@ export class PicoSerial {
   
       if (this.picoreader) {
         await this.picoreader.cancel();
+        this.picoreader.releaseLock();
+        this.picoreader = null;
+      }
+      if (this.picowriter) {
+        await this.picowriter.cancel();
+        this.picowriter.releaseLock();
+        this.picowriter = null;
       }
   
       if (localPort) {

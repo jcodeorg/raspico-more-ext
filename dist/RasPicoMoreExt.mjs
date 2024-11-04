@@ -1241,6 +1241,9 @@ var ja = {
 	"pcratchPico.getAdc02": "ADC2",
 	"pcratchPico.getAdc03": "ADC3",
 	"pcratchPico.getAdc04": "ADC4",
+	"pcratchPico.getPinValue": "ピン [PIN] の値",
+	"pcratchPico.whenPinEvent": "ピン [PIN] で [EVENT] イベントが起きたとき",
+	"pcratchPico.playTone": "ピン [PIN] で [FREQ] Hz [VOL] % DUTYの音を鳴らす",
 	"pcratchPico.lightLevel": "あかるさ"
 };
 var translations = {
@@ -1709,8 +1712,6 @@ var PicoSerial = /*#__PURE__*/function () {
     _classCallCheck(this, PicoSerial);
     // ランタイムを保存
     this._runtime = runtime;
-    // 書き込み Stream
-    this.picowriter = null;
     // ポート選択ドロップダウン
     this.portSelector = undefined;
     // 接続ボタン
@@ -1720,7 +1721,9 @@ var PicoSerial = /*#__PURE__*/function () {
     // 現在使用しているポート
     this.picoport = undefined;
     // 現在使用しているリーダー
-    this.picoreader = undefined;
+    this.picoreader = null;
+    // 書き込み Stream
+    this.picowriter = null;
     // 接続ステータス
     this.status = 0; // 0:未接続 1:接続中 2:接続済み
 
@@ -1895,34 +1898,42 @@ var PicoSerial = /*#__PURE__*/function () {
               localPort = this.picoport;
               this.picoport = undefined;
               if (!this.picoreader) {
-                _context3.next = 5;
+                _context3.next = 7;
                 break;
               }
               _context3.next = 5;
               return this.picoreader.cancel();
             case 5:
+              this.picoreader.releaseLock();
+              this.picoreader = null;
+            case 7:
+              if (this.picowriter) {
+                // await this.picowriter.cancel();
+                this.picowriter.releaseLock();
+                this.picowriter = null;
+              }
               if (!localPort) {
-                _context3.next = 14;
+                _context3.next = 17;
                 break;
               }
-              _context3.prev = 6;
-              _context3.next = 9;
+              _context3.prev = 9;
+              _context3.next = 12;
               return localPort.close();
-            case 9:
-              _context3.next = 14;
+            case 12:
+              _context3.next = 17;
               break;
-            case 11:
-              _context3.prev = 11;
-              _context3.t0 = _context3["catch"](6);
-              console.error(_context3.t0);
             case 14:
+              _context3.prev = 14;
+              _context3.t0 = _context3["catch"](9);
+              console.error(_context3.t0);
+            case 17:
               this.status = 0;
               //this.markDisconnected();
-            case 15:
+            case 18:
             case "end":
               return _context3.stop();
           }
-        }, _callee3, this, [[6, 11]]);
+        }, _callee3, this, [[9, 14]]);
       }));
       function disconnect() {
         return _disconnect.apply(this, arguments);
@@ -2051,16 +2062,19 @@ var PicoSerial = /*#__PURE__*/function () {
     value: (function () {
       var _picowrite = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee6(s) {
         var _this$picowriter;
+        var encoder, encoded;
         return _regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) switch (_context6.prev = _context6.next) {
             case 0:
               this.getWritablePort();
-              log$1.log("picowrite: ".concat(s, " : ").concat(this.picowriter));
-              _context6.next = 4;
-              return (_this$picowriter = this.picowriter) === null || _this$picowriter === void 0 ? void 0 : _this$picowriter.write(new TextEncoder().encode(s));
-            case 4:
+              encoder = new TextEncoder();
+              encoded = encoder.encode(s);
+              log$1.log("picowrite: ".concat(s, " : ").concat(encoded));
+              _context6.next = 6;
+              return (_this$picowriter = this.picowriter) === null || _this$picowriter === void 0 ? void 0 : _this$picowriter.write(encoded);
+            case 6:
               this.releaseLock();
-            case 5:
+            case 7:
             case "end":
               return _context6.stop();
           }
@@ -2205,7 +2219,7 @@ var Machine = /*#__PURE__*/function () {
     //    this.analogValue[pinIndex] = 0;
     //});
 
-    this.gpio = [0, 1, 2, 8, 12, 13, 14, 15, 16];
+    this.gpio = [2, 3, 4, 5, 6, 7, 8, 9];
     this.gpio.forEach(function (pinIndex) {
       _this.digitalLevel[pinIndex] = 0;
     });
@@ -2270,21 +2284,21 @@ var Machine = /*#__PURE__*/function () {
   return _createClass(Machine, [{
     key: "getLastEventId",
     value: function getLastEventId(name, event) {
-      var key = "".concat(name, "_").concat(event);
+      var key = "".concat(name, "_").concat(event, "_ID");
       return this._v_[key];
     }
     // 前のイベントのIDを返却する
   }, {
     key: "getPrevEventId",
     value: function getPrevEventId(name, event) {
-      var key = "".concat(name, "_").concat(event);
+      var key = "".concat(name, "_").concat(event, "_ID");
       return this._prev_[key];
     }
     // 前のイベントのIDを最後のイベントのIDで上書きする
   }, {
     key: "updatePrevEventId",
     value: function updatePrevEventId(name, event) {
-      var key = "".concat(name, "_").concat(event);
+      var key = "".concat(name, "_").concat(event, "_ID");
       console.log("updatePrevEventId: ".concat(key, ": ").concat(this._prev_[key], " --> ").concat(this._v_[key]));
       this._prev_[key] = this._v_[key];
     }
@@ -3060,11 +3074,21 @@ var ExtensionBlocks = /*#__PURE__*/function () {
 
     //this.connectPeripheral(); // ペリフェラルに接続
   }
-
-  /**
-   * @returns {object} metadata for this extension and its blocks.
-   */
   return _createClass(ExtensionBlocks, [{
+    key: "GPIO_MENU",
+    get: function get() {
+      return this.machine.gpio.map(function (pinIndex) {
+        return Object.create({
+          text: "P".concat(pinIndex.toString()),
+          value: pinIndex.toString()
+        });
+      });
+    }
+
+    /**
+     * @returns {object} metadata for this extension and its blocks.
+     */
+  }, {
     key: "getInfo",
     value: function getInfo() {
       setupTranslations();
@@ -3183,25 +3207,105 @@ var ExtensionBlocks = /*#__PURE__*/function () {
           }),
           blockType: BlockType$1.REPORTER
         }, {
-          opcode: 'whenButtonEvent',
+          opcode: 'whenPinEvent',
           text: formatMessage({
-            id: 'mbitMore.whenButtonEvent',
-            default: 'when button [NAME] is [EVENT]',
-            description: 'when the selected button on the micro:bit get the selected event'
+            id: 'pcratchPico.whenPinEvent',
+            default: 'when catch [EVENT] at pin [PIN]',
+            description: 'when catch the event at the pin'
           }),
           blockType: BlockType$1.HAT,
           arguments: {
-            NAME: {
-              type: ArgumentType$1.STRING,
-              defaultValue: 'A'
-            },
             EVENT: {
               type: ArgumentType$1.STRING,
-              defaultValue: 'DOWN'
+              defaultValue: 'ANY'
+            },
+            PIN: {
+              type: ArgumentType$1.STRING,
+              menu: 'gpio',
+              defaultValue: '7'
+            }
+          }
+        }, {
+          opcode: 'getPinValue',
+          text: formatMessage({
+            id: 'pcratchPico.getPinValue',
+            default: 'value of pin [PIN]',
+            description: 'analog input value of the pin'
+          }),
+          blockType: BlockType$1.REPORTER,
+          arguments: {
+            PIN: {
+              type: ArgumentType$1.STRING,
+              menu: 'gpio',
+              defaultValue: '7'
+            }
+          }
+        }, {
+          opcode: 'playTone',
+          text: formatMessage({
+            id: 'pcratchPico.playTone',
+            default: 'play tone [FREQ] Hz [VOL] % duty at [PIN]',
+            description: 'play tone on the speaker'
+          }),
+          blockType: BlockType$1.COMMAND,
+          arguments: {
+            PIN: {
+              type: ArgumentType$1.STRING,
+              menu: 'gpio',
+              defaultValue: '2'
+            },
+            FREQ: {
+              type: ArgumentType$1.NUMBER,
+              defaultValue: 440
+            },
+            VOL: {
+              type: ArgumentType$1.NUMBER,
+              defaultValue: 50
+            }
+          }
+        }, {
+          opcode: 'displayFill',
+          text: formatMessage({
+            id: 'pcratchPico.displayFill',
+            default: '画面を [VAL] で埋める',
+            description: '画面を埋める'
+          }),
+          blockType: BlockType$1.COMMAND,
+          arguments: {
+            VAL: {
+              type: ArgumentType$1.NUMBER,
+              defaultValue: 0
+            }
+          }
+        }, {
+          opcode: 'displayKanji',
+          text: formatMessage({
+            id: 'pcratchPico.displayKanji',
+            default: '画面 X [X] Y [Y] に [TEXT] を表示',
+            description: '漢字を表示'
+          }),
+          blockType: BlockType$1.COMMAND,
+          arguments: {
+            TEXT: {
+              type: ArgumentType$1.STRING,
+              defaultValue: 'ぷくらっち'
+            },
+            X: {
+              type: ArgumentType$1.NUMBER,
+              defaultValue: 0
+            },
+            Y: {
+              type: ArgumentType$1.NUMBER,
+              defaultValue: 0
             }
           }
         }],
-        menus: {}
+        menus: {
+          gpio: {
+            acceptReporters: false,
+            items: this.GPIO_MENU
+          }
+        }
       };
     }
     /**
@@ -3212,10 +3316,10 @@ var ExtensionBlocks = /*#__PURE__*/function () {
      * @return {boolean} - true if the event raised.
      */
   }, {
-    key: "whenButtonEvent",
-    value: function whenButtonEvent(args) {
+    key: "whenPinEvent",
+    value: function whenPinEvent(args) {
       var _this = this;
-      var name = args.NAME;
+      var name = "P" + args.PIN;
       var event = args.EVENT;
       var lid = this.machine.getLastEventId(name, event);
       if (!lid) return false; // no event
@@ -3229,6 +3333,80 @@ var ExtensionBlocks = /*#__PURE__*/function () {
       }
       return true;
     }
+    /**
+     * Return analog value of the pin.
+     * @param {object} args - the block's arguments.
+     * @param {number} args.PIN - pin ID.
+     * @param {object} util - utility object provided by the runtime.
+     * @return {?Promise} a Promise that resolves analog input value of the pin or undefined if this process was yield.
+     */
+  }, {
+    key: "getPinValue",
+    value: function getPinValue(args, util) {
+      var name = "P" + args.PIN;
+      var key = "".concat(name, "_ANY");
+      console.log('getPinValue:', key);
+      return this.machine._v_[key];
+    }
+    /**
+     * Play tone on the speaker.
+     * @param {object} args - the block's arguments.
+     * @param {string} args.FREQ - wave frequency to play
+     * @param {string} args.VOL laudness of tone
+     * @param {object} util - utility object provided by the runtime.
+     * @return {promise | undefined} - a Promise that resolves when the command was sent
+     *                                 or undefined if this process was yield.
+     */
+  }, {
+    key: "playTone",
+    value: function playTone(args) {
+      var pin = parseInt(args.PIN, 10);
+      var frequency = parseInt(args.FREQ, 10);
+      var volume = parseInt(args.VOL, 10);
+      volume = Math.min(100, Math.max(0, volume));
+      try {
+        var text = Cast$1.toString("playTone(".concat(pin, ", ").concat(frequency, ", ").concat(volume, ")"));
+        this.machine.picowrite(text + '\r\n');
+      } catch (error) {
+        console.log(error);
+      }
+      return;
+    }
+
+    /**
+     * Play tone on the speaker.
+     * @param {object} args - the block's arguments.
+     * @param {number} args.VAL 0 または 1
+     */
+  }, {
+    key: "displayFill",
+    value: function displayFill(args) {
+      var val = parseInt(args.VAL, 10);
+      try {
+        var text = Cast$1.toString("display.fill(".concat(val, ")"));
+        this.machine.picowrite(text + '\r\n');
+      } catch (error) {
+        console.log(error);
+      }
+      return;
+    }
+  }, {
+    key: "displayKanji",
+    value: function displayKanji(args) {
+      var x = parseInt(args.X, 10);
+      var y = parseInt(args.Y, 10);
+      var str = Cast$1.toString(args.TEXT);
+      try {
+        // ダブルクォーテーションをエスケープ
+        var escapedText = str.replace(/"/g, '\\"');
+        var text = Cast$1.toString("display.kanji(\"".concat(escapedText, "\", ").concat(x, ", ").concat(y, ")"));
+        this.machine.picowrite(text + '\r\n');
+      } catch (error) {
+        console.log(error);
+      }
+      return;
+    }
+
     /**
      * Get amount of light (0 - 255) on the LEDs.
      * @param {object} args - the block's arguments.

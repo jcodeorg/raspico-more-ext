@@ -208,7 +208,7 @@ export class PicoSerial {
         this.picoreader = null;
       }
       if (this.picowriter) {
-        await this.picowriter.cancel();
+        // await this.picowriter.cancel();
         this.picowriter.releaseLock();
         this.picowriter = null;
       }
@@ -289,8 +289,10 @@ export class PicoSerial {
      */
     async picowrite(s) {
       this.getWritablePort();
-      log.log(`picowrite: ${s} : ${this.picowriter}`);
-      await this.picowriter?.write(new TextEncoder().encode(s));
+      const encoder = new TextEncoder();
+      const encoded = encoder.encode(s);
+      log.log(`picowrite: ${s} : ${encoded}`);
+      await this.picowriter?.write(encoded);
       this.releaseLock();
     }
     async writeData(data) {

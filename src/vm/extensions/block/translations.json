@@ -13,6 +13,9 @@
     "pcratchPico.getAdc02": "ADC2",
     "pcratchPico.getAdc03": "ADC3",
     "pcratchPico.getAdc04": "ADC4",
+    "pcratchPico.getPinValue": "ピン [PIN] の値",
+    "pcratchPico.whenPinEvent": "ピン [PIN] で [EVENT] イベントが起きたとき",
+    "pcratchPico.playTone": "ピン [PIN] で [FREQ] Hz [VOL] % DUTYの音を鳴らす",
     "pcratchPico.lightLevel": "あかるさ"
   },
   "ja-Hira": {

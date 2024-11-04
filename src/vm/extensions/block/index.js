@@ -127,7 +127,7 @@ class ExtensionBlocks {
             name: ExtensionBlocks.EXTENSION_NAME,
             extensionURL: ExtensionBlocks.extensionURL,
             blockIconURI: blockIcon,
-            showStatusButton: false,
+            showStatusButton: true,
             blocks: [
                 {
                     // Picoに接続する
@@ -146,36 +146,37 @@ class ExtensionBlocks {
                     }
                 },
                 {
-                  // コマンドを実行
-                  opcode: "execCommand",
-                  text: formatMessage({
-                      id: "pcratchPico.execCommand",
-                      default: "[TEXT] を実行",
-                  }),
-                  blockType: BlockType.COMMAND,
-                  arguments: {
-                      TEXT: {
-                          type: ArgumentType.STRING,
-                          defaultValue: "help()"
-                      }
-                  }
-                },
-                {
-                  // CTRL-x を送信する
-                  opcode: "sendCtrlCode",
-                  text: formatMessage({
-                      id: "pcratchPico.sendCtrlCode",
-                      default: "CTRL- [TEXT] を送信",
-                  }),
-                  blockType: BlockType.COMMAND,
-                  arguments: {
-                    TEXT: {
-                      type: ArgumentType.STRING,
-                      defaultValue: "D"
+                    // コマンドを送信して実行させる
+                    opcode: "execCommand",
+                    text: formatMessage({
+                        id: "pcratchPico.execCommand",
+                        default: "[TEXT] を実行",
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        TEXT: {
+                            type: ArgumentType.STRING,
+                            defaultValue: "dumpADC()"
+                        }
                     }
-                  }
                 },
                 {
+                    // CTRL-x を送信する
+                    opcode: "sendCtrlCode",
+                    text: formatMessage({
+                        id: "pcratchPico.sendCtrlCode",
+                        default: "CTRL- [TEXT] を送信",
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        TEXT: {
+                        type: ArgumentType.STRING,
+                        defaultValue: "D"
+                        }
+                    }
+                },
+                {
+                    // デバイスの返却値を表示する
                     opcode: 'dumpValue',
                     blockType: BlockType.REPORTER,
                     blockAllThreads: false,
@@ -192,6 +193,7 @@ class ExtensionBlocks {
                     }
                 },
                 {
+                    // ADC0 の値を表示する
                     opcode: 'getAdc00',
                     text: formatMessage({
                         id: 'pcratchPico.getAdc00',
@@ -245,10 +247,51 @@ class ExtensionBlocks {
                     }),
                     blockType: BlockType.REPORTER
                 },
+                {
+                    opcode: 'whenButtonEvent',
+                    text: formatMessage({
+                        id: 'mbitMore.whenButtonEvent',
+                        default: 'when button [NAME] is [EVENT]',
+                        description: 'when the selected button on the micro:bit get the selected event'
+                    }),
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        NAME: {
+                            type: ArgumentType.STRING,
+                            defaultValue: 'A'
+                        },
+                        EVENT: {
+                            type: ArgumentType.STRING,
+                            defaultValue: 'DOWN'
+                        }
+                    }
+                },
             ],
             menus: {
             }
         };
+    }
+    /**
+     * Test whether the event raised at the button.
+     * @param {object} args - the block's arguments.
+     * @param {string} args.NAME - name of the button.
+     * @param {string} args.EVENT - name of event to catch.
+     * @return {boolean} - true if the event raised.
+     */
+    whenButtonEvent (args) {
+        const name = args.NAME;
+        const event = args.EVENT;
+        const lid = this.machine.getLastEventId(name, event);
+        if (!lid) return false; // no event
+        const pid = this.machine.getPrevEventId(name, event);
+        if (lid === pid) return false; // no new event
+        if (!this.updateLastButtonEventTimer) {
+            this.updateLastButtonEventTimer = setTimeout(() => {
+                this.machine.updatePrevEventId(name, event);
+                this.updateLastButtonEventTimer = null;
+            }, this.runtime.currentStepTime);
+        }
+        return true;
     }
     /**
      * Get amount of light (0 - 255) on the LEDs.

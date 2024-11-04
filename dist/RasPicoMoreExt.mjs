@@ -33,13 +33,14 @@ var translations$1 = {
 var formatMessage$1 = function formatMessage(messageData) {
   return messageData.defaultMessage;
 };
+var version = 'v0.9.1';
 var entry = {
   get name() {
-    return formatMessage$1({
+    return "".concat(formatMessage$1({
       id: 'pcratchPico.entry.name',
-      defaultMessage: 'Xcratch Example',
-      description: 'name of the extension'
-    });
+      defaultMessage: 'Pcratch Pico controll Micro-Python device',
+      description: 'Pcratch Pico'
+    }), " (").concat(version, ")");
   },
   extensionId: 'pcratchPico',
   extensionURL: 'https://xcratch.github.io/xcx-example/dist/pcratchPico.mjs',
@@ -1703,9 +1704,12 @@ var SerialProcessor = /*#__PURE__*/function () {
   }]);
 }();
 var PicoSerial = /*#__PURE__*/function () {
-  function PicoSerial() {
+  function PicoSerial(runtime) {
     var _this = this;
     _classCallCheck(this, PicoSerial);
+    // ランタイムを保存
+    this._runtime = runtime;
+    // 書き込み Stream
     this.picowriter = null;
     // ポート選択ドロップダウン
     this.portSelector = undefined;
@@ -1745,9 +1749,10 @@ var PicoSerial = /*#__PURE__*/function () {
 
     // シリアルポートの接続イベントを監視
     navigator.serial.addEventListener('connect', function (event) {
-      console.log('Serial port connected:', event);
+      console.log('Serial port connected!!:', event);
       // 必要な処理をここに追加
       _this.status = 2;
+      _this._runtime.emit(_this._runtime.constructor.PERIPHERAL_CONNECTED);
     });
 
     // シリアルポートの切断イベントを監視
@@ -1878,9 +1883,9 @@ var PicoSerial = /*#__PURE__*/function () {
     */
     )
   }, {
-    key: "disconnectFromPort",
+    key: "disconnect",
     value: (function () {
-      var _disconnectFromPort = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee3() {
+      var _disconnect = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee3() {
         var localPort;
         return _regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) switch (_context3.prev = _context3.next) {
@@ -1911,15 +1916,18 @@ var PicoSerial = /*#__PURE__*/function () {
               _context3.t0 = _context3["catch"](6);
               console.error(_context3.t0);
             case 14:
+              this.status = 0;
+              //this.markDisconnected();
+            case 15:
             case "end":
               return _context3.stop();
           }
         }, _callee3, this, [[6, 11]]);
       }));
-      function disconnectFromPort() {
-        return _disconnectFromPort.apply(this, arguments);
+      function disconnect() {
+        return _disconnect.apply(this, arguments);
       }
-      return disconnectFromPort;
+      return disconnect;
     }()
     /**
      * ポートをオープンします
@@ -1961,24 +1969,29 @@ var PicoSerial = /*#__PURE__*/function () {
               });
             case 13:
               reader = this.picoport.readable.getReader();
-              console.log('Connected!!');
+              console.log('Connected!?!');
+
+              // 必要な処理をここに追加
+              this.status = 2;
+              this._runtime.emit(this._runtime.constructor.PERIPHERAL_CONNECTED);
+
               // 1行毎に解析して、this._v_ に受信した変数を格納する
               serialProcessor = new SerialProcessor(_v_);
               serialProcessor.processData(reader).catch(console.error);
 
               //term.writeln('<CONNECTED>');
-              _context4.next = 22;
+              _context4.next = 24;
               break;
-            case 19:
-              _context4.prev = 19;
+            case 21:
+              _context4.prev = 21;
               _context4.t0 = _context4["catch"](10);
               console.error(_context4.t0);
               //this.markDisconnected();
-            case 22:
+            case 24:
             case "end":
               return _context4.stop();
           }
-        }, _callee4, this, [[10, 19]]);
+        }, _callee4, this, [[10, 21]]);
       }));
       function openpicoport(_x2) {
         return _openpicoport.apply(this, arguments);
@@ -2108,11 +2121,14 @@ var Machine = /*#__PURE__*/function () {
     this._v_ = {
       "dummy": 123
     };
+    this._prev_ = {
+      "prev": 456
+    };
 
     // シリアル接続
     this.picoserial = null;
     try {
-      this.picoserial = new PicoSerial();
+      this.picoserial = new PicoSerial(this.runtime);
     } catch (error) {
       console.log(error);
     }
@@ -2248,9 +2264,34 @@ var Machine = /*#__PURE__*/function () {
   }
 
   /**
-   * Pico Serial
+   * イベント処理
    */
+  // 最後のイベントのIDを返却する
   return _createClass(Machine, [{
+    key: "getLastEventId",
+    value: function getLastEventId(name, event) {
+      var key = "".concat(name, "_").concat(event);
+      return this._v_[key];
+    }
+    // 前のイベントのIDを返却する
+  }, {
+    key: "getPrevEventId",
+    value: function getPrevEventId(name, event) {
+      var key = "".concat(name, "_").concat(event);
+      return this._prev_[key];
+    }
+    // 前のイベントのIDを最後のイベントのIDで上書きする
+  }, {
+    key: "updatePrevEventId",
+    value: function updatePrevEventId(name, event) {
+      var key = "".concat(name, "_").concat(event);
+      console.log("updatePrevEventId: ".concat(key, ": ").concat(this._prev_[key], " --> ").concat(this._v_[key]));
+      this._prev_[key] = this._v_[key];
+    }
+    /**
+     * Pico Serial
+     */
+  }, {
     key: "openpicoport",
     value: function openpicoport() {
       if (this.picoserial) {
@@ -2630,15 +2671,6 @@ var Machine = /*#__PURE__*/function () {
     }
 
     /**
-     * Start to scan Bluetooth LE devices to find micro:bit with MicroBit More service.
-     */
-  }, {
-    key: "scanBLE",
-    value: function scanBLE() {
-      return Promise.resolve();
-    }
-
-    /**
      * Whether the key is pressed at this moment.
      * @param {string} key - key in keyboard event
      * @returns {boolean} - return true when the key is pressed
@@ -2689,7 +2721,10 @@ var Machine = /*#__PURE__*/function () {
     key: "disconnect",
     value: function disconnect() {
       console.log("machine.disconnect()");
-      return;
+      if (this.picoserial) {
+        return this.picoserial.disconnect();
+      }
+      this.onDisconnect();
     }
 
     /**
@@ -2711,6 +2746,7 @@ var Machine = /*#__PURE__*/function () {
     value: function isConnected() {
       console.log("machine.isConnected()");
       if (this.picoserial) {
+        console.log(this.picoserial.isConnected());
         return this.picoserial.isConnected();
       }
       return false;
@@ -3037,7 +3073,7 @@ var ExtensionBlocks = /*#__PURE__*/function () {
         name: ExtensionBlocks.EXTENSION_NAME,
         extensionURL: ExtensionBlocks.extensionURL,
         blockIconURI: img,
-        showStatusButton: false,
+        showStatusButton: true,
         blocks: [{
           // Picoに接続する
           opcode: "connectPico",
@@ -3054,7 +3090,7 @@ var ExtensionBlocks = /*#__PURE__*/function () {
             }
           }
         }, {
-          // コマンドを実行
+          // コマンドを送信して実行させる
           opcode: "execCommand",
           text: formatMessage({
             id: "pcratchPico.execCommand",
@@ -3064,7 +3100,7 @@ var ExtensionBlocks = /*#__PURE__*/function () {
           arguments: {
             TEXT: {
               type: ArgumentType$1.STRING,
-              defaultValue: "help()"
+              defaultValue: "dumpADC()"
             }
           }
         }, {
@@ -3082,6 +3118,7 @@ var ExtensionBlocks = /*#__PURE__*/function () {
             }
           }
         }, {
+          // デバイスの返却値を表示する
           opcode: 'dumpValue',
           blockType: BlockType$1.REPORTER,
           blockAllThreads: false,
@@ -3097,6 +3134,7 @@ var ExtensionBlocks = /*#__PURE__*/function () {
             }
           }
         }, {
+          // ADC0 の値を表示する
           opcode: 'getAdc00',
           text: formatMessage({
             id: 'pcratchPico.getAdc00',
@@ -3144,9 +3182,52 @@ var ExtensionBlocks = /*#__PURE__*/function () {
             description: 'how much the amount of light falling on the LEDs on micro:bit'
           }),
           blockType: BlockType$1.REPORTER
+        }, {
+          opcode: 'whenButtonEvent',
+          text: formatMessage({
+            id: 'mbitMore.whenButtonEvent',
+            default: 'when button [NAME] is [EVENT]',
+            description: 'when the selected button on the micro:bit get the selected event'
+          }),
+          blockType: BlockType$1.HAT,
+          arguments: {
+            NAME: {
+              type: ArgumentType$1.STRING,
+              defaultValue: 'A'
+            },
+            EVENT: {
+              type: ArgumentType$1.STRING,
+              defaultValue: 'DOWN'
+            }
+          }
         }],
         menus: {}
       };
+    }
+    /**
+     * Test whether the event raised at the button.
+     * @param {object} args - the block's arguments.
+     * @param {string} args.NAME - name of the button.
+     * @param {string} args.EVENT - name of event to catch.
+     * @return {boolean} - true if the event raised.
+     */
+  }, {
+    key: "whenButtonEvent",
+    value: function whenButtonEvent(args) {
+      var _this = this;
+      var name = args.NAME;
+      var event = args.EVENT;
+      var lid = this.machine.getLastEventId(name, event);
+      if (!lid) return false; // no event
+      var pid = this.machine.getPrevEventId(name, event);
+      if (lid === pid) return false; // no new event
+      if (!this.updateLastButtonEventTimer) {
+        this.updateLastButtonEventTimer = setTimeout(function () {
+          _this.machine.updatePrevEventId(name, event);
+          _this.updateLastButtonEventTimer = null;
+        }, this.runtime.currentStepTime);
+      }
+      return true;
     }
     /**
      * Get amount of light (0 - 255) on the LEDs.

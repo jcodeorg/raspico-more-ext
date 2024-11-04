@@ -14,13 +14,15 @@ import translations from './translations.json';
  */
 let formatMessage = messageData => messageData.defaultMessage;
 
+const version = 'v0.9.1';
+
 const entry = {
     get name () {
-        return formatMessage({
+        return `${formatMessage({
             id: 'pcratchPico.entry.name',
-            defaultMessage: 'Xcratch Example',
-            description: 'name of the extension'
-        });
+            defaultMessage: 'Pcratch Pico controll Micro-Python device',
+            description: 'Pcratch Pico'
+        })} (${version})`;
     },
     extensionId: 'pcratchPico',
     extensionURL: 'https://xcratch.github.io/xcx-example/dist/pcratchPico.mjs',

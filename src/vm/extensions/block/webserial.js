@@ -196,7 +196,7 @@ export class PicoSerial {
     /**
     * 接続をクローズします
     */
-    async disconnectFromPort() {
+    async disconnect() {
       // Move |port| into a local variable so that connectToPort() doesn't try to
       // close it on exit.
       const localPort = this.picoport;
@@ -213,6 +213,7 @@ export class PicoSerial {
           console.error(e);
         }
       }
+      this.status = 0;
       //this.markDisconnected();
     }
   
@@ -234,7 +235,12 @@ export class PicoSerial {
       try {
         await this.picoport.open({baudRate: 115200});
         const reader = this.picoport.readable.getReader();
-        console.log('Connected!!');
+        console.log('Connected!?!');
+
+        // 必要な処理をここに追加
+        this.status = 2;
+        this._runtime.emit(this._runtime.constructor.PERIPHERAL_CONNECTED);
+
         // 1行毎に解析して、this._v_ に受信した変数を格納する
         const serialProcessor = new SerialProcessor(_v_);
         serialProcessor.processData(reader).catch(console.error);

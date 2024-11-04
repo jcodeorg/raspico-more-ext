@@ -22,6 +22,7 @@ export class Machine {
 
         // デバイスから返却された値を格納するオブジェクト
         this._v_ = {"dummy": 123};
+        this._prev_ = {"prev": 456};
 
         // シリアル接続
         this.picoserial = null;
@@ -173,6 +174,25 @@ export class Machine {
         });
     }
 
+    /**
+     * イベント処理
+     */
+    // 最後のイベントのIDを返却する
+    getLastEventId(name, event) {
+        const key = `${name}_${event}`;
+        return this._v_[key];
+    }
+    // 前のイベントのIDを返却する
+    getPrevEventId(name, event) {
+        const key = `${name}_${event}`;
+        return this._prev_[key];
+    }
+    // 前のイベントのIDを最後のイベントのIDで上書きする
+    updatePrevEventId(name, event) {
+        const key = `${name}_${event}`;
+        console.log(`updatePrevEventId: ${key}: ${this._prev_[key]} --> ${this._v_[key]}`);
+        this._prev_[key] = this._v_[key];
+    }
     /**
      * Pico Serial
      */
@@ -708,26 +728,6 @@ export class Machine {
     }
 
     /**
-     * Start to scan Bluetooth LE devices to find micro:bit with MicroBit More service.
-     */
-    scanBLE () {
-        return Promise.resolve();
-        const connectorClass = BLE;
-        this._ble = new connectorClass(
-            this.runtime,
-            this._extensionId,
-            {
-                filters: [
-                    {namePrefix: 'BBC micro:bit'},
-                    {services: [MM_SERVICE.ID]}
-                ]
-            },
-            this._onConnect,
-            this.onDisconnect
-        );
-    }
-
-    /**
      * Whether the key is pressed at this moment.
      * @param {string} key - key in keyboard event
      * @returns {boolean} - return true when the key is pressed
@@ -788,9 +788,8 @@ export class Machine {
      */
     disconnect () {
         console.log("machine.disconnect()")
-        return;
-        if (this._ble) {
-            this._ble.disconnect();
+        if (this.picoserial) {
+            return this.picoserial.disconnect();
         }
         this.onDisconnect();
     }
